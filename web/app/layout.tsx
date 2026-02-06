@@ -14,9 +14,9 @@ const spaceMono = Space_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Shimeji Factory | Open Your Intergalactic Portal",
+  title: "Shimeji Factory | AI Companions for Your Browser",
   description:
-    "Open an intergalactic portal, set an intention, and welcome a playful shimeji companion that follows you across the web.",
+    "Animated browser companions with AI chat. Choose a personality, talk to your shimeji, or connect an AI agent with onchain tools.",
   generator: "v0.app",
   icons: {
     icon: [

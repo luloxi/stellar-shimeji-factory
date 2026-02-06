@@ -1,30 +1,37 @@
 "use client";
 
-import { ImagePlus, Paintbrush, Sparkles } from "lucide-react";
+import { Download, MessageSquare, Sparkles, Bot } from "lucide-react";
 import { ScrollAnimation } from "./scroll-animation";
 import { useLanguage } from "./language-provider";
 
 const steps = [
   {
-    icon: ImagePlus,
+    icon: Download,
     step: "01",
-    title: "Open a Portal",
+    title: "Install the Extension",
     description:
-      "Visit the Factory and open a Shimeji portal to begin the arrival ritual.",
+      "Download the Chrome extension and your shimeji will appear on every page you visit.",
   },
   {
-    icon: Paintbrush,
+    icon: MessageSquare,
     step: "02",
-    title: "Set an Intention",
+    title: "Chat with Your Shimeji",
     description:
-      "Write a short intention so your companion knows how to support you.",
+      "Click on your companion to open the chat. Pick a personality and add your own API key to start talking.",
+  },
+  {
+    icon: Bot,
+    step: "03",
+    title: "Enable the AI Agent",
+    description:
+      "Switch to AI Agent mode and connect an OpenClaw gateway to give your shimeji access to online and onchain tools.",
   },
   {
     icon: Sparkles,
-    step: "03",
-    title: "Welcome Your Companion",
+    step: "04",
+    title: "Commission a Custom Shimeji",
     description:
-      "When your sprite is ready, install the Chrome extension and watch it come to life on screen.",
+      "Open a portal in the Factory, set an intention, and receive a handcrafted companion with unique sprites.",
   },
 ];
 
@@ -45,7 +52,7 @@ export function HowItWorksSection() {
             </h2>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {steps.map((step) => (
               <div
                 key={step.title}
@@ -63,19 +70,23 @@ export function HowItWorksSection() {
                 <h3 className="text-xl font-bold text-foreground mb-3">
                   {isSpanish
                     ? step.step === "01"
-                      ? "Abre un portal"
+                      ? "Instala la extensión"
                       : step.step === "02"
-                        ? "Define una intención"
-                        : "Recibe tu compañero"
+                        ? "Chatea con tu shimeji"
+                        : step.step === "03"
+                          ? "Activa el agente IA"
+                          : "Encarga un shimeji único"
                     : step.title}
                 </h3>
                 <p className="text-muted-foreground leading-relaxed">
                   {isSpanish
                     ? step.step === "01"
-                      ? "Visita Factory y abre un portal Shimeji para iniciar la llegada."
+                      ? "Descarga la extensión de Chrome y tu shimeji aparecerá en cada página que visites."
                       : step.step === "02"
-                        ? "Escribe una intención breve para que tu compañero sepa cómo ayudarte."
-                        : "Cuando tu sprite esté listo, instala la extensión de Chrome y mira cómo cobra vida."
+                        ? "Haz clic en tu compañero para abrir el chat. Elige una personalidad y agrega tu API key para empezar a hablar."
+                        : step.step === "03"
+                          ? "Cambia al modo AI Agent y conecta un gateway OpenClaw para darle acceso a herramientas online y onchain."
+                          : "Abre un portal en Factory, define una intención y recibe un compañero hecho a mano con sprites únicos."
                     : step.description}
                 </p>
               </div>

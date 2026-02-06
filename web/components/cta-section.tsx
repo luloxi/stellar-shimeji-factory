@@ -21,18 +21,18 @@ export function CtaSection() {
           <div className="text-center rounded-3xl border border-[#1159CC]/25 bg-white/88 backdrop-blur p-8 md:p-12 shadow-[0_10px_30px_rgba(0,0,0,0.12)]">
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 tracking-tight text-balance text-[#000000]">
               {isSpanish
-                ? "¿Listo para darle vida a tu personaje?"
-                : "Ready to bring your character to life?"}
+                ? "Tu compañero IA te espera"
+                : "Your AI companion is waiting"}
             </h2>
             <p className="mb-4 max-w-lg mx-auto text-[#000000]">
               {isSpanish
-                ? "Abre un portal con intención y mira cómo tu shimeji llega para acompañarte por toda la web."
-                : "Open a portal with intention and watch your shimeji arrive to follow you across the web."}
+                ? "Descarga la extensión, elige una personalidad y empeza a chatear. O activa el modo agente para herramientas onchain."
+                : "Download the extension, pick a personality, and start chatting. Or enable agent mode for onchain tools."}
             </p>
             <p className="mb-8 max-w-lg mx-auto text-[#000000]/80">
               {isSpanish
-                ? "Visita Factory para comenzar, o descarga la extensión para probar primero la mascota por defecto."
-                : "Visit the Factory to get started, or download the extension to try the default mascot first."}
+                ? "La extensión es gratis e incluye una mascota por defecto. Encarga un shimeji único en Factory."
+                : "The extension is free and includes a default mascot. Commission a unique shimeji in the Factory."}
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <DownloadButton />

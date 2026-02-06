@@ -30,8 +30,8 @@ export function HeroSection() {
               <div className="max-w-sm text-left sm:text-left">
                 <p className="text-lg leading-relaxed">
                   {isSpanish
-                    ? "Abre un portal intergaláctico, define su intención y deja que llegue un shimeji listo para acompañarte en el escritorio."
-                    : "Open an intergalactic portal, set its intention, and let a shimeji arrive ready to accompany you in your browser."}
+                    ? "Compañeros animados con IA que viven en tu navegador. Elige una personalidad, chatea con tu shimeji o conecta un agente con herramientas onchain."
+                    : "Animated AI companions that live in your browser. Pick a personality, chat with your shimeji, or connect an agent with onchain tools."}
                 </p>              </div>
             </div>
 

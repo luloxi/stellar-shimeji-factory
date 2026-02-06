@@ -19,8 +19,9 @@ export function DownloadSection() {
           </div>
           <h2 className="text-5xl font-bold mb-4">Download Shimeji.dev</h2>
           <p className="text-lg text-gray-700 max-w-2xl mx-auto">
-            Get your desktop companions on any platform. Choose your preferred
-            way to bring shimejis to life!
+            Install the extension and get an AI companion in your browser.
+            Chat with it, let it react to your browsing, or connect it to
+            onchain tools.
           </p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

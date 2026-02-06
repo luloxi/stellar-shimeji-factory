@@ -403,6 +403,65 @@ h3 {
   color: #2a1f4e;
 }
 
+/* Chat Mode Toggle */
+.chat-mode-toggle {
+  display: flex;
+  gap: 6px;
+}
+
+.mode-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(42, 31, 78, 0.15);
+  border-radius: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(4px);
+  font-family: 'Nunito', sans-serif;
+}
+
+.mode-card:hover {
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.mode-card-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #2a1f4e;
+}
+
+.mode-card-subtitle {
+  font-size: 10px;
+  color: rgba(42, 31, 78, 0.5);
+  font-weight: 500;
+}
+
+.mode-card.selected {
+  background: #2a1f4e;
+  border-color: transparent;
+  box-shadow: 0 1px 4px rgba(42, 31, 78, 0.3);
+}
+
+.mode-card.selected .mode-card-title {
+  color: #fff;
+}
+
+.mode-card.selected .mode-card-subtitle {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+#standard-fields,
+#agent-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .ai-hint {
   font-size: 10px;
   color: rgba(42, 31, 78, 0.45);

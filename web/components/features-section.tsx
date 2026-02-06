@@ -1,28 +1,40 @@
 "use client";
 
-import { ArrowLeftRight, Sparkles, Image } from "lucide-react";
+import { MessageSquare, Bot, Sparkles, Palette, ArrowLeftRight } from "lucide-react";
 import { ScrollAnimation } from "./scroll-animation";
 import { ProjectFeedbackBox } from "./project-feedback-box";
 import { useLanguage } from "./language-provider";
 
 const features = [
   {
-    icon: Image,
-    title: "Intention-Led Portals",
+    icon: MessageSquare,
+    title: "AI Chat with Personality",
     description:
-      "Give your shimeji a purpose before it arrives so it can support your daily flow.",
+      "Your shimeji talks back. Choose from six personalities — from cozy and philosophical to chaotic and noir.",
   },
   {
-    icon: ArrowLeftRight,
-    title: "Stellar Wallet Ready",
+    icon: Bot,
+    title: "AI Agent Mode",
     description:
-      "Connect with Freighter and keep everything lightweight on the Stellar network.",
+      "Connect an OpenClaw gateway and your shimeji becomes an agent with access to online searches and onchain tools.",
   },
   {
     icon: Sparkles,
+    title: "Proactive Comments",
+    description:
+      "Enable proactive messages and your shimeji will spontaneously react to the pages you browse.",
+  },
+  {
+    icon: Palette,
     title: "Handcrafted Sprites",
     description:
-      "Each shimeji is hand-animated with care, so your companion feels alive.",
+      "Commission a custom shimeji through the Factory. Each one is hand-animated with unique art.",
+  },
+  {
+    icon: ArrowLeftRight,
+    title: "Stellar Wallet Integration",
+    description:
+      "Connect Freighter to reserve portals and manage payments on the Stellar network.",
   },
 ];
 
@@ -39,22 +51,20 @@ export function FeaturesSection() {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-20">
             <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground tracking-tight">
-              {isSpanish ? "¿Por qué encargar un Shimeji?" : "Why Commission a Shimeji?"}
+              {isSpanish ? "¿Qué puede hacer tu Shimeji?" : "What Can Your Shimeji Do?"}
             </h2>
             <p className="text-lg text-foreground mt-4 max-w-xl mx-auto">
               {isSpanish
-                ? "Dale vida a un compañero que nace con intención y te acompaña cada día"
-                : "Bring a companion to life with intention and daily support"}
+                ? "Más que una mascota — un compañero con IA que habla, opina y ejecuta acciones"
+                : "More than a mascot — an AI companion that talks, reacts, and takes action"}
             </p>
           </div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {features.map((feature, index) => (
+            {features.map((feature) => (
               <div
                 key={feature.title}
-                className={`group bg-card rounded-3xl p-8 border border-[#FF9999] transition-all ${
-                  index === 0 ? "sm:col-span-2 lg:col-span-1" : ""
-                }`}
+                className="group bg-card rounded-3xl p-8 border border-[#FF9999] transition-all"
               >
                 <div className="w-12 h-12 bg-[#FF6666] rounded-2xl flex items-center justify-center mb-6 transition-colors">
                   <feature.icon className="w-5 h-5" />
@@ -62,20 +72,28 @@ export function FeaturesSection() {
 
                 <h3 className="text-lg font-bold text-foreground mb-2">
                   {isSpanish
-                    ? feature.title === "Intention-Led Portals"
-                      ? "Portales con intención"
-                      : feature.title === "Stellar Wallet Ready"
-                        ? "Listo para Stellar"
-                        : "Sprites hechos a mano"
+                    ? feature.title === "AI Chat with Personality"
+                      ? "Chat IA con personalidad"
+                      : feature.title === "AI Agent Mode"
+                        ? "Modo agente IA"
+                        : feature.title === "Proactive Comments"
+                          ? "Comentarios espontáneos"
+                          : feature.title === "Handcrafted Sprites"
+                            ? "Sprites hechos a mano"
+                            : "Integración con Stellar"
                     : feature.title}
                 </h3>
                 <p className="text-muted-foreground leading-relaxed">
                   {isSpanish
-                    ? feature.title === "Intention-Led Portals"
-                      ? "Define un propósito antes de que se abra para que tu compañero llegue con sentido."
-                      : feature.title === "Stellar Wallet Ready"
-                        ? "Conecta Freighter y mantén todo ligero en la red Stellar."
-                        : "Cada shimeji se anima a mano para que se sienta vivo."
+                    ? feature.title === "AI Chat with Personality"
+                      ? "Tu shimeji te responde. Elige entre seis personalidades — desde filosófica y acogedora hasta caótica y noir."
+                      : feature.title === "AI Agent Mode"
+                        ? "Conecta un gateway OpenClaw y tu shimeji se convierte en un agente con acceso a búsquedas online y herramientas onchain."
+                        : feature.title === "Proactive Comments"
+                          ? "Activa los mensajes proactivos y tu shimeji reaccionará de forma espontánea a las páginas que visites."
+                          : feature.title === "Handcrafted Sprites"
+                            ? "Encarga un shimeji personalizado en Factory. Cada uno se anima a mano con arte único."
+                            : "Conecta Freighter para reservar portales y gestionar pagos en la red Stellar."
                     : feature.description}
                 </p>
               </div>

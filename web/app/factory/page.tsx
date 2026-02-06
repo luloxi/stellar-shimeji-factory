@@ -44,16 +44,18 @@ export default function FactoryPage() {
               Shimeji Factory
             </h1>
             <p className="text-lg text-gray-700 max-w-2xl mx-auto">
-              Open an intergalactic portal, set an intention, and welcome a
-              companion that grows with you.
+              Commission a custom shimeji with unique hand-animated sprites.
+              Open a portal, set an intention, and your companion will arrive
+              ready to chat and accompany you.
             </p>
           </div>
 
           <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 mb-8">
             <h2 className="text-xl font-bold mb-2">Intergalactic Portal</h2>
             <p className="text-gray-700 text-sm">
-              Each portal opens to a unique shimeji. Add an intention so your
-              new companion knows how to support you from day one.
+              Each portal produces a unique shimeji with custom sprites. Your
+              intention shapes its art direction and personality. Once ready, it
+              appears in the extension with full AI chat support.
             </p>
           </div>
 

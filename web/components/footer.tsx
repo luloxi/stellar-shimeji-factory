@@ -30,8 +30,8 @@ export function Footer() {
               </div>
               <p className="text-primary-foreground/60 text-sm max-w-xs mb-6 leading-relaxed">
                 {isSpanish
-                  ? "Abre un portal intergaláctico y define una intención. Tu shimeji llegará listo para acompañarte en tu navegador."
-                  : "Open an intergalactic portal and set an intention. Your shimeji will arrive ready to accompany you in your browser."}
+                  ? "Compañeros animados con IA para tu navegador. Chatea, recibe comentarios espontáneos o conecta un agente con herramientas onchain."
+                  : "Animated AI companions for your browser. Chat, get spontaneous comments, or connect an agent with onchain tools."}
               </p>
               <div className="flex gap-3">
                 <Link

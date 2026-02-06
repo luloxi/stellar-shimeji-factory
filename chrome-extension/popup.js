@@ -184,6 +184,39 @@ document.addEventListener("DOMContentLoaded", () => {
   const aiApiKeyInput = document.getElementById("ai-api-key");
   const toggleKeyBtn = document.getElementById("toggle-key-visibility");
   const proactiveToggle = document.getElementById("proactive-toggle");
+  const modeButtons = document.querySelectorAll(".mode-card");
+  const standardFields = document.getElementById("standard-fields");
+  const agentFields = document.getElementById("agent-fields");
+  const openclawGatewayUrlInput = document.getElementById("openclaw-gateway-url");
+
+  // Chat mode toggle
+  function setChatModeUI(mode) {
+    modeButtons.forEach((btn) => {
+      btn.classList.toggle("selected", btn.dataset.mode === mode);
+    });
+    standardFields.style.display = mode === "standard" ? "" : "none";
+    agentFields.style.display = mode === "agent" ? "" : "none";
+  }
+
+  modeButtons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const mode = btn.dataset.mode;
+      chrome.storage.local.set({ chatMode: mode });
+      setChatModeUI(mode);
+    });
+  });
+
+  // OpenClaw gateway URL - save on blur or Enter
+  function saveGatewayUrl() {
+    chrome.storage.local.set({ openclawGatewayUrl: openclawGatewayUrlInput.value.trim() });
+  }
+  openclawGatewayUrlInput.addEventListener("blur", saveGatewayUrl);
+  openclawGatewayUrlInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      saveGatewayUrl();
+      openclawGatewayUrlInput.blur();
+    }
+  });
 
   const MODEL_OPTIONS = {
     openrouter: [
@@ -223,8 +256,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Load AI settings from storage
   chrome.storage.local.get(
-    ["aiPersonality", "aiProvider", "aiModel", "aiApiKey", "proactiveMessages"],
+    ["aiPersonality", "aiProvider", "aiModel", "aiApiKey", "proactiveMessages", "chatMode", "openclawGatewayUrl"],
     (data) => {
+      // Set chat mode
+      const chatMode = data.chatMode || "standard";
+      setChatModeUI(chatMode);
+
       aiPersonalitySelect.value = data.aiPersonality || "cryptid";
 
       const provider = data.aiProvider || "openrouter";
@@ -233,6 +270,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (data.aiApiKey) {
         aiApiKeyInput.value = data.aiApiKey;
+      }
+
+      if (data.openclawGatewayUrl) {
+        openclawGatewayUrlInput.value = data.openclawGatewayUrl;
       }
 
       if (proactiveToggle) {

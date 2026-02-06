@@ -13,32 +13,37 @@ const faqs = [
   {
     question: "What is a shimeji?",
     answer:
-      "Shimeji are cute desktop mascots that originated in Japan. They're small animated characters that live on your screen, following your cursor and wandering around while you browse the web.",
+      "Shimeji are animated desktop companions that originated in Japan. They live on your screen, wander around, and — with this extension — can chat with you using AI.",
   },
   {
-    question: "Do I need a wallet to open a portal?",
+    question: "What is Standard mode?",
     answer:
-      "Yes. Connect a Stellar wallet (Freighter) to reserve a portal and handle payments when they open.",
+      "Standard mode is text-only AI chat. You pick a personality (like Cozy, Chaotic, or Noir), add your own API key from OpenRouter or OpenAI, and your shimeji responds in character.",
   },
   {
-    question: "How much does it cost?",
+    question: "What is AI Agent mode?",
     answer:
-      "Portal pricing will be shown in the Factory before you confirm. You'll only pay Stellar network fees at checkout.",
+      "AI Agent mode connects your shimeji to an OpenClaw gateway. This gives it access to online searches, onchain tools, and other capabilities beyond simple text chat.",
   },
   {
-    question: "How long does it take?",
+    question: "Do I need an API key?",
     answer:
-      "Each shimeji is handcrafted, so turnaround time varies. We'll notify you when your sprite is ready. You can track the status in the Factory.",
+      "For Standard mode, yes — you provide your own OpenRouter or OpenAI key. For AI Agent mode, you need a running OpenClaw gateway instead.",
   },
   {
-    question: "What happens to my intention?",
+    question: "What are proactive messages?",
     answer:
-      "It guides the art direction and behavior prompts for your companion. You can refine it later if you want.",
+      "When enabled, your shimeji will spontaneously comment on the page you're browsing — an observation, a joke, or a reflection based on its personality.",
   },
   {
     question: "Is the Chrome extension free?",
     answer:
-      "Yes! The extension is free to download and includes a default mascot.",
+      "Yes! The extension is free and includes a default mascot with full AI chat support. Custom shimejis can be commissioned through the Factory.",
+  },
+  {
+    question: "Do I need a wallet?",
+    answer:
+      "Only if you want to commission a custom shimeji through the Factory. The AI chat features work without a wallet.",
   },
 ];
 
@@ -71,29 +76,33 @@ export function FAQSection() {
                     ? index === 0
                       ? "¿Qué es un shimeji?"
                       : index === 1
-                        ? "¿Necesito una wallet para abrir un portal?"
+                        ? "¿Qué es el modo Standard?"
                         : index === 2
-                          ? "¿Cuánto cuesta?"
+                          ? "¿Qué es el modo AI Agent?"
                           : index === 3
-                            ? "¿Cuánto se demora?"
+                            ? "¿Necesito una API key?"
                             : index === 4
-                              ? "¿Qué pasa con mi intención?"
-                              : "¿La extensión de Chrome es gratis?"
+                              ? "¿Qué son los mensajes proactivos?"
+                              : index === 5
+                                ? "¿La extensión de Chrome es gratis?"
+                                : "¿Necesito una wallet?"
                     : faq.question}
                 </AccordionTrigger>
                 <AccordionContent className="text-md text-muted-foreground pb-5 leading-relaxed">
                   {isSpanish
                     ? index === 0
-                      ? "Los shimeji son mascotas de escritorio que nacieron en Japón. Son personajes animados pequeños que viven en tu pantalla, siguen tu cursor y pasean mientras navegas."
+                      ? "Los shimeji son compañeros animados de escritorio que nacieron en Japón. Viven en tu pantalla, pasean, y — con esta extensión — pueden chatear contigo usando IA."
                       : index === 1
-                        ? "Sí. Conecta una wallet de Stellar (Freighter) para reservar un portal y pagar cuando se habiliten los cobros."
-                      : index === 2
-                          ? "El precio del portal aparecerá en Factory antes de confirmar. Solo pagarás comisiones de red de Stellar al finalizar."
+                        ? "El modo Standard es chat de texto con IA. Elegís una personalidad (como Cozy, Chaotic o Noir), agregás tu API key de OpenRouter u OpenAI, y tu shimeji responde acorde a su personaje."
+                        : index === 2
+                          ? "El modo AI Agent conecta tu shimeji a un gateway OpenClaw. Esto le da acceso a búsquedas online, herramientas onchain y otras capacidades más allá del chat de texto."
                           : index === 3
-                            ? "Cada shimeji se hace a mano, así que el tiempo puede variar. Te avisaremos cuando tu sprite esté listo. Puedes seguir el estado en Factory."
+                            ? "Para el modo Standard, sí — usás tu propia key de OpenRouter u OpenAI. Para el modo AI Agent, necesitás un gateway OpenClaw corriendo en su lugar."
                             : index === 4
-                              ? "Tu intención guía el estilo y comportamiento del compañero. Puedes ajustarla más adelante si lo deseas."
-                              : "¡Sí! La extensión es gratuita e incluye una mascota por defecto."
+                              ? "Cuando están activados, tu shimeji comenta espontáneamente sobre la página que estás viendo — una observación, un chiste o una reflexión según su personalidad."
+                              : index === 5
+                                ? "¡Sí! La extensión es gratuita e incluye una mascota por defecto con soporte completo de chat IA. Los shimejis personalizados se encargan a través de Factory."
+                                : "Solo si querés encargar un shimeji personalizado en Factory. Las funciones de chat IA funcionan sin wallet."
                     : faq.answer}
                 </AccordionContent>
               </AccordionItem>

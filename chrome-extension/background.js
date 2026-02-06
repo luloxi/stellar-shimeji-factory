@@ -368,14 +368,16 @@ Relationship: A cynical but loyal companion. You've seen it all, but you stick a
 
 async function getAiSettings() {
   return new Promise((resolve) => {
-    chrome.storage.local.get(['aiProvider', 'aiModel', 'aiApiKey', 'aiPersonality'], (data) => {
+    chrome.storage.local.get(['aiProvider', 'aiModel', 'aiApiKey', 'aiPersonality', 'chatMode', 'openclawGatewayUrl'], (data) => {
       const personalityKey = data.aiPersonality || 'cryptid';
       const personality = PERSONALITIES[personalityKey] || PERSONALITIES.cryptid;
       resolve({
+        chatMode: data.chatMode || 'standard',
         provider: data.aiProvider || 'openrouter',
         model: data.aiModel || 'google/gemini-2.0-flash-001',
         apiKey: data.aiApiKey || '',
-        systemPrompt: personality.prompt + '\n' + STYLE_RULES
+        systemPrompt: personality.prompt + '\n' + STYLE_RULES,
+        openclawGatewayUrl: data.openclawGatewayUrl || 'ws://127.0.0.1:18789'
       });
     });
   });
@@ -441,6 +443,53 @@ async function callAiApi(provider, model, apiKey, messages) {
   return content;
 }
 
+async function callOpenClaw(gatewayUrl, messages) {
+  return new Promise((resolve, reject) => {
+    let ws;
+    const timeout = setTimeout(() => {
+      if (ws) ws.close();
+      reject(new Error('OpenClaw connection timed out. Is the gateway running?'));
+    }, 30000);
+
+    try {
+      ws = new WebSocket(gatewayUrl);
+    } catch (err) {
+      clearTimeout(timeout);
+      reject(new Error('Invalid OpenClaw gateway URL. Check your settings.'));
+      return;
+    }
+
+    ws.addEventListener('open', () => {
+      ws.send(JSON.stringify({ messages }));
+    });
+
+    ws.addEventListener('message', (event) => {
+      clearTimeout(timeout);
+      try {
+        const data = JSON.parse(event.data);
+        const content = data.content || data.message || (typeof data === 'string' ? data : JSON.stringify(data));
+        ws.close();
+        resolve(content);
+      } catch {
+        ws.close();
+        resolve(event.data);
+      }
+    });
+
+    ws.addEventListener('error', () => {
+      clearTimeout(timeout);
+      reject(new Error('Could not connect to OpenClaw gateway. Make sure it is running at ' + gatewayUrl));
+    });
+
+    ws.addEventListener('close', (event) => {
+      clearTimeout(timeout);
+      if (!event.wasClean && event.code !== 1000) {
+        reject(new Error('OpenClaw connection closed unexpectedly.'));
+      }
+    });
+  });
+}
+
 async function handleAiChat(conversationMessages) {
   const settings = await getAiSettings();
   const messages = [
@@ -448,7 +497,12 @@ async function handleAiChat(conversationMessages) {
     ...conversationMessages
   ];
   try {
-    const content = await callAiApi(settings.provider, settings.model, settings.apiKey, messages);
+    let content;
+    if (settings.chatMode === 'agent') {
+      content = await callOpenClaw(settings.openclawGatewayUrl, messages);
+    } else {
+      content = await callAiApi(settings.provider, settings.model, settings.apiKey, messages);
+    }
     return { content };
   } catch (err) {
     return { error: err.message };
@@ -464,7 +518,12 @@ async function handleAiProactiveMessage(pageTitle, pageUrl) {
     { role: 'user', content: 'Say something!' }
   ];
   try {
-    const content = await callAiApi(settings.provider, settings.model, settings.apiKey, messages);
+    let content;
+    if (settings.chatMode === 'agent') {
+      content = await callOpenClaw(settings.openclawGatewayUrl, messages);
+    } else {
+      content = await callAiApi(settings.provider, settings.model, settings.apiKey, messages);
+    }
     return { content };
   } catch (err) {
     return { error: err.message };
