@@ -31,7 +31,7 @@ export function HeroSection() {
                 <p className="text-lg leading-relaxed">
                   {isSpanish
                     ? "Abre un portal intergaláctico, define su intención y deja que llegue un shimeji listo para acompañarte en el escritorio."
-                    : "Open an intergalactic portal, set its intention, and let a shimeji arrive ready to accompany you on your desktop."}
+                    : "Open an intergalactic portal, set its intention, and let a shimeji arrive ready to accompany you in your browser."}
                 </p>              </div>
             </div>
 

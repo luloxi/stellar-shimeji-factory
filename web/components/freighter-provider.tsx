@@ -8,14 +8,13 @@ import {
   useMemo,
   useState,
 } from "react";
-
-type FreighterApi = {
-  isConnected?: () => Promise<boolean>;
-  getPublicKey?: () => Promise<string>;
-  connect?: () => Promise<void>;
-  getNetwork?: () => Promise<string>;
-  getNetworkDetails?: () => Promise<{ network?: string; networkPassphrase?: string }>;
-};
+import {
+  getAddress,
+  getNetwork,
+  getNetworkDetails,
+  isConnected,
+  requestAccess,
+} from "@stellar/freighter-api";
 
 type FreighterState = {
   isAvailable: boolean;
@@ -31,21 +30,31 @@ type FreighterState = {
 
 const FreighterContext = createContext<FreighterState | null>(null);
 
-function getFreighterApi(): FreighterApi | null {
-  if (typeof window === "undefined") return null;
-  const anyWindow = window as unknown as { freighterApi?: FreighterApi; freighter?: FreighterApi };
-  return anyWindow.freighterApi || anyWindow.freighter || null;
+function hasError<T extends { error?: unknown }>(value: T): value is T & {
+  error: { message?: string } | string;
+} {
+  return Boolean(value && "error" in value && value.error);
 }
 
-async function getNetworkLabel(api: FreighterApi): Promise<string | null> {
-  if (api.getNetwork) {
-    return api.getNetwork();
+function hasWindowFreighter() {
+  if (typeof window === "undefined") return false;
+  const anyWindow = window as unknown as {
+    freighterApi?: unknown;
+    freighter?: unknown;
+  };
+  return Boolean(anyWindow.freighterApi || anyWindow.freighter);
+}
+
+async function getNetworkLabel(): Promise<string | null> {
+  const details = await getNetworkDetails();
+  if (hasError(details)) {
+    const networkObj = await getNetwork();
+    if (hasError(networkObj)) {
+      return null;
+    }
+    return networkObj.network || null;
   }
-  if (api.getNetworkDetails) {
-    const details = await api.getNetworkDetails();
-    return details.network || details.networkPassphrase || null;
-  }
-  return null;
+  return details.network || details.networkPassphrase || null;
 }
 
 export function FreighterProvider({ children }: { children: React.ReactNode }) {
@@ -57,25 +66,36 @@ export function FreighterProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
-    const api = getFreighterApi();
-    setIsAvailable(Boolean(api));
-    if (!api?.isConnected || !api.getPublicKey) {
-      return;
-    }
-
     try {
-      const connected = await api.isConnected();
-      if (!connected) {
+      const windowAvailable = hasWindowFreighter();
+      setIsAvailable(windowAvailable);
+
+      const status = await isConnected();
+      if (hasError(status)) {
+        setIsConnected(false);
+        setPublicKey(null);
+        setNetwork(null);
+        return;
+      }
+      setIsAvailable(true);
+      if (!status.isConnected) {
         setIsConnected(false);
         setPublicKey(null);
         setNetwork(null);
         return;
       }
 
-      const key = await api.getPublicKey();
-      const nextNetwork = await getNetworkLabel(api);
-      setIsConnected(true);
-      setPublicKey(key);
+      const addressObj = await getAddress();
+      if (hasError(addressObj)) {
+        setIsConnected(false);
+        setPublicKey(null);
+        setNetwork(null);
+        return;
+      }
+
+      const nextNetwork = await getNetworkLabel();
+      setIsConnected(Boolean(addressObj.address));
+      setPublicKey(addressObj.address || null);
       setNetwork(nextNetwork);
       setError(null);
     } catch (err) {
@@ -85,22 +105,29 @@ export function FreighterProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const connect = useCallback(async () => {
-    const api = getFreighterApi();
-    setIsAvailable(Boolean(api));
-    if (!api?.getPublicKey) {
-      setError("Freighter wallet not detected.");
-      return;
-    }
-
     setIsConnecting(true);
     try {
-      if (api.connect) {
-        await api.connect();
+      const windowAvailable = hasWindowFreighter();
+      const status = await isConnected();
+      if (!windowAvailable && (hasError(status) || !status.isConnected)) {
+        setIsAvailable(false);
+        setError("Freighter wallet not detected.");
+        return;
       }
-      const key = await api.getPublicKey();
-      const nextNetwork = await getNetworkLabel(api);
+      setIsAvailable(true);
+
+      const access = await requestAccess();
+      if (hasError(access)) {
+        throw new Error(
+          typeof access.error === "string"
+            ? access.error
+            : access.error.message || "Connection request failed."
+        );
+      }
+
+      const nextNetwork = await getNetworkLabel();
       setIsConnected(true);
-      setPublicKey(key);
+      setPublicKey(access.address);
       setNetwork(nextNetwork);
       setError(null);
     } catch (err) {

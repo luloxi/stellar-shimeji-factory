@@ -30,32 +30,38 @@ export function Footer() {
               </div>
               <p className="text-primary-foreground/60 text-sm max-w-xs mb-6 leading-relaxed">
                 {isSpanish
-                  ? "Abre un portal intergaláctico y define una intención. Tu shimeji llegará listo para acompañarte en tu escritorio."
-                  : "Open an intergalactic portal and set an intention. Your shimeji will arrive ready to accompany you on your desktop."}
+                  ? "Abre un portal intergaláctico y define una intención. Tu shimeji llegará listo para acompañarte en tu navegador."
+                  : "Open an intergalactic portal and set an intention. Your shimeji will arrive ready to accompany you in your browser."}
               </p>
               <div className="flex gap-3">
                 <Link
-                  href="https://x.com/shimejidev"
+                  href="https://x.com/ShimejiFactory"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-9 h-9 rounded-xl bg-primary-foreground/10 flex items-center justify-center hover:bg-primary-foreground/20 transition-colors"
+                  className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#FFCC66] via-[#FF9999] to-[#1159CC] p-[2px] shadow-[0_10px_22px_rgba(17,89,204,0.35)] transition-transform hover:-translate-y-0.5"
                   aria-label="Twitter"
                 >
-                  <Twitter className="w-4 h-4" />
+                  <span className="flex h-full w-full items-center justify-center rounded-[0.9rem] bg-[#0B0B14] text-[#FFCC66]">
+                    <Twitter className="w-5 h-5" />
+                  </span>
                 </Link>
                 <Link
                   href="#"
-                  className="w-9 h-9 rounded-xl bg-primary-foreground/10 flex items-center justify-center hover:bg-primary-foreground/20 transition-colors"
+                  className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#FFCC66] via-[#FF9999] to-[#1159CC] p-[2px] shadow-[0_10px_22px_rgba(17,89,204,0.35)] transition-transform hover:-translate-y-0.5"
                   aria-label="Discord"
                 >
-                  <MessageCircle className="w-4 h-4" />
+                  <span className="flex h-full w-full items-center justify-center rounded-[0.9rem] bg-[#0B0B14] text-[#FFCC66]">
+                    <MessageCircle className="w-5 h-5" />
+                  </span>
                 </Link>
                 <Link
                   href="#"
-                  className="w-9 h-9 rounded-xl bg-primary-foreground/10 flex items-center justify-center hover:bg-primary-foreground/20 transition-colors"
+                  className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#FFCC66] via-[#FF9999] to-[#1159CC] p-[2px] shadow-[0_10px_22px_rgba(17,89,204,0.35)] transition-transform hover:-translate-y-0.5"
                   aria-label="GitHub"
                 >
-                  <Github className="w-4 h-4" />
+                  <span className="flex h-full w-full items-center justify-center rounded-[0.9rem] bg-[#0B0B14] text-[#FFCC66]">
+                    <Github className="w-5 h-5" />
+                  </span>
                 </Link>
               </div>
             </div>
@@ -93,7 +99,7 @@ export function Footer() {
                 </li>
                 <li>
                   <Link
-                    href="https://x.com/shimejidev"
+                    href="https://x.com/ShimejiFactory"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-sm text-primary-foreground/60 hover:text-primary-foreground transition-colors"

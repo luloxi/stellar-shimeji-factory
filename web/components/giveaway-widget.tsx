@@ -8,6 +8,19 @@ export function GiveawayWidget() {
   const { isSpanish } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const timerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    timerRef.current = window.setTimeout(() => {
+      setIsOpen(true);
+    }, 3000);
+
+    return () => {
+      if (timerRef.current) {
+        window.clearTimeout(timerRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -56,7 +69,15 @@ export function GiveawayWidget() {
         }`}
       >
         <div className="rounded-2xl giveaway-border p-[2px] shadow-[0_12px_30px_rgba(17,89,204,0.45)]">
-          <div className="rounded-[calc(1rem-2px)] bg-[#1159CC] text-white p-3 md:p-4">
+          <div className="relative rounded-[calc(1rem-2px)] bg-[#1159CC] text-white p-3 md:p-4">
+            <button
+              type="button"
+              onClick={() => setIsOpen(false)}
+              className="absolute right-5 top-5 text-xs font-bold text-white/80 hover:text-white"
+              aria-label={isSpanish ? "Cerrar popup" : "Close popup"}
+            >
+              ×
+            </button>
             <p className="text-[10px] md:text-xs font-black uppercase tracking-[0.14em] text-[#FFCC66]">
               {isSpanish ? "Giveaway Shimeji" : "Shimeji Giveaway"}
             </p>
@@ -66,12 +87,12 @@ export function GiveawayWidget() {
             <p className="mt-1 text-xs md:text-sm leading-snug text-white/90 break-words">
               {isSpanish ? "Sigue a " : "Follow "}
               <Link
-                href="https://x.com/shimejidev"
+                href="https://x.com/ShimejiFactory"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="font-bold underline decoration-2 underline-offset-2 text-[#FFCC66] hover:opacity-80"
               >
-                @shimejidev
+                @ShimejiFactory
               </Link>
               {isSpanish
                 ? " y deja feedback para participar."
@@ -87,25 +108,6 @@ export function GiveawayWidget() {
           </div>
         </div>
       </div>
-
-      <button
-        type="button"
-        onClick={() => setIsOpen((previous) => !previous)}
-        aria-expanded={isOpen}
-        aria-controls="giveaway-panel"
-        className="giveaway-border cursor-pointer rounded-2xl p-[2px] shadow-[0_12px_30px_rgba(17,89,204,0.45)]"
-      >
-        <div className="rounded-[calc(1rem-2px)] bg-[#1159CC] px-2 py-2">
-          <img
-            src="/GIVEWAY2.png"
-            alt="Open giveaway info"
-            className="w-14 md:w-16 h-auto animate-bounce rounded-xl"
-          />
-          <p className="mt-1 text-[10px] md:text-xs font-black uppercase tracking-[0.12em] text-[#FFCC66]">
-            {isSpanish ? "Sorteo" : "Giveaway"}
-          </p>
-        </div>
-      </button>
 
       <style jsx>{`
         .giveaway-border {
