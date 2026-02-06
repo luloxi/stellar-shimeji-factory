@@ -18,7 +18,7 @@
           <line x1="9" y1="9" x2="9.01" y2="9"></line>
           <line x1="15" y1="9" x2="15.01" y2="9"></line>
         </svg>
-        <span>Connect Freighter</span>
+        <span>Select character</span>
       </a>
       <a href="https://www.shimeji.dev/factory" target="_blank" class="popup-link marketplace-link">
         <span>Open more portals</span>
@@ -53,6 +53,38 @@
           <button class="control-btn global-btn" id="disable-all-btn">Disable All</button>
         </div>
         <div class="global-status" id="global-status"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="controls-section ai-section">
+    <div class="control-group">
+      <h3>AI Chat</h3>
+      <div class="ai-controls">
+        <div class="ai-field">
+          <label class="ai-label" for="ai-provider">Provider</label>
+          <select id="ai-provider" class="ai-select">
+            <option value="openrouter">OpenRouter</option>
+            <option value="openai">OpenAI</option>
+          </select>
+        </div>
+        <div class="ai-field">
+          <label class="ai-label" for="ai-model">Model</label>
+          <select id="ai-model" class="ai-select"></select>
+        </div>
+        <div class="ai-field">
+          <label class="ai-label" for="ai-api-key">API Key</label>
+          <div class="api-key-wrapper">
+            <input type="password" id="ai-api-key" class="ai-input" placeholder="Enter your API key">
+            <button id="toggle-key-visibility" class="key-toggle-btn" type="button">Show</button>
+          </div>
+        </div>
+        <label class="toggle-row" id="proactive-toggle-row">
+          <span class="toggle-label">Proactive messages</span>
+          <input type="checkbox" id="proactive-toggle" class="toggle-checkbox">
+          <span class="toggle-slider"></span>
+        </label>
+        <div class="ai-hint">Shimeji will occasionally comment on the page you're browsing</div>
       </div>
     </div>
   </section>

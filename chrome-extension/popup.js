@@ -176,4 +176,111 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     });
   }
+
+  // --- AI Chat Settings ---
+  const aiProviderSelect = document.getElementById("ai-provider");
+  const aiModelSelect = document.getElementById("ai-model");
+  const aiApiKeyInput = document.getElementById("ai-api-key");
+  const toggleKeyBtn = document.getElementById("toggle-key-visibility");
+  const proactiveToggle = document.getElementById("proactive-toggle");
+
+  const MODEL_OPTIONS = {
+    openrouter: [
+      { value: "google/gemini-2.0-flash-001", label: "Gemini 2.0 Flash" },
+      { value: "moonshotai/kimi-k2.5", label: "Kimi K2.5" },
+      { value: "anthropic/claude-sonnet-4", label: "Claude Sonnet 4" },
+      { value: "meta-llama/llama-4-maverick", label: "Llama 4 Maverick" },
+      { value: "deepseek/deepseek-chat-v3-0324", label: "DeepSeek Chat v3" },
+      { value: "mistralai/mistral-large-2411", label: "Mistral Large" },
+    ],
+    openai: [
+      { value: "gpt-4o", label: "GPT-4o" },
+      { value: "gpt-4o-mini", label: "GPT-4o Mini" },
+      { value: "gpt-4.1", label: "GPT-4.1" },
+      { value: "gpt-4.1-mini", label: "GPT-4.1 Mini" },
+      { value: "o3-mini", label: "o3 Mini" },
+    ],
+  };
+
+  function populateModelDropdown(provider, selectedModel) {
+    aiModelSelect.innerHTML = "";
+    const models = MODEL_OPTIONS[provider] || [];
+    models.forEach((m) => {
+      const opt = document.createElement("option");
+      opt.value = m.value;
+      opt.textContent = m.label;
+      aiModelSelect.appendChild(opt);
+    });
+    // Set selected model if it exists in the list, otherwise default to first
+    if (selectedModel && models.some((m) => m.value === selectedModel)) {
+      aiModelSelect.value = selectedModel;
+    } else if (models.length > 0) {
+      aiModelSelect.value = models[0].value;
+      chrome.storage.local.set({ aiModel: models[0].value });
+    }
+  }
+
+  // Load AI settings from storage
+  chrome.storage.local.get(
+    ["aiProvider", "aiModel", "aiApiKey", "proactiveMessages"],
+    (data) => {
+      const provider = data.aiProvider || "openrouter";
+      aiProviderSelect.value = provider;
+      populateModelDropdown(provider, data.aiModel);
+
+      if (data.aiApiKey) {
+        aiApiKeyInput.value = data.aiApiKey;
+      }
+
+      if (proactiveToggle) {
+        proactiveToggle.checked = !!data.proactiveMessages;
+      }
+    }
+  );
+
+  // Provider change
+  aiProviderSelect.addEventListener("change", () => {
+    const provider = aiProviderSelect.value;
+    chrome.storage.local.set({ aiProvider: provider });
+    populateModelDropdown(provider, null);
+  });
+
+  // Model change
+  aiModelSelect.addEventListener("change", () => {
+    chrome.storage.local.set({ aiModel: aiModelSelect.value });
+  });
+
+  // API key - save on blur or Enter
+  function saveApiKey() {
+    chrome.storage.local.set({ aiApiKey: aiApiKeyInput.value.trim() });
+  }
+  aiApiKeyInput.addEventListener("blur", saveApiKey);
+  aiApiKeyInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      saveApiKey();
+      aiApiKeyInput.blur();
+    }
+  });
+
+  // Show/hide API key
+  toggleKeyBtn.addEventListener("click", () => {
+    if (aiApiKeyInput.type === "password") {
+      aiApiKeyInput.type = "text";
+      toggleKeyBtn.textContent = "Hide";
+    } else {
+      aiApiKeyInput.type = "password";
+      toggleKeyBtn.textContent = "Show";
+    }
+  });
+
+  // Proactive messages toggle
+  if (proactiveToggle) {
+    proactiveToggle.addEventListener("change", () => {
+      const enabled = proactiveToggle.checked;
+      chrome.runtime.sendMessage({
+        type: "setProactiveMessages",
+        enabled: enabled,
+      });
+    });
+  }
 });

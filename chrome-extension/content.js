@@ -125,6 +125,11 @@
         dragOffsetX: 0,
         dragOffsetY: 0,
 
+        // Click vs drag detection
+        dragPending: false,
+        dragStartX: 0,
+        dragStartY: 0,
+
         // Drag animation state
         prevDragX: 0,           // Previous X position for velocity calculation
         smoothedVelocityX: 0,   // Smoothed horizontal velocity
@@ -139,6 +144,30 @@
     // Preloaded sprite images
     const spriteImages = {};
     let spritesLoaded = false;
+
+    // --- Chat State ---
+    let chatBubbleEl = null;
+    let thinkingBubbleEl = null;
+    let alertBubbleEl = null;
+    let inlineThinkingEl = null;
+    let chatMessagesEl = null;
+    let chatInputEl = null;
+    let conversationHistory = []; // {role, content} array for API
+    let isChatOpen = false;
+    let isThinking = false;
+    let hasUnreadMessage = false;
+    let proactiveEnabled = false;
+    let proactiveTimer = null;
+
+    // --- Font Injection ---
+    function injectFontIfNeeded() {
+        if (document.getElementById('shimeji-nunito-font')) return;
+        const link = document.createElement('link');
+        link.id = 'shimeji-nunito-font';
+        link.rel = 'stylesheet';
+        link.href = 'https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap';
+        document.head.appendChild(link);
+    }
 
     // --- Sprite Loading ---
     function preloadSprites() {
@@ -220,31 +249,41 @@
         mascotElement.style.transform = mascot.facingRight ? 'scaleX(-1)' : 'scaleX(1)';
     }
 
-    // --- Drag Handling ---
-    function setupDragListeners() {
-        mascotElement.addEventListener('mousedown', startDrag);
+    // --- Drag Handling (with click vs drag detection) ---
+    const DRAG_THRESHOLD = 5; // pixels before mousedown becomes a drag
 
-        // Touch support
-        mascotElement.addEventListener('touchstart', startDragTouch, { passive: false });
+    function setupDragListeners() {
+        mascotElement.addEventListener('mousedown', onMouseDown);
+        mascotElement.addEventListener('touchstart', onTouchStart, { passive: false });
 
         if (!documentDragListenersReady) {
-            document.addEventListener('mousemove', onDrag);
-            document.addEventListener('mouseup', endDrag);
-            document.addEventListener('touchmove', onDragTouch, { passive: false });
-            document.addEventListener('touchend', endDrag);
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
+            document.addEventListener('touchmove', onTouchMove, { passive: false });
+            document.addEventListener('touchend', onTouchEnd);
             documentDragListenersReady = true;
         }
     }
 
-    function startDrag(e) {
+    function onMouseDown(e) {
         e.preventDefault();
-        mascot.isDragging = true;
-        mascot.state = State.DRAGGED;
+        mascot.dragPending = true;
+        mascot.dragStartX = e.clientX;
+        mascot.dragStartY = e.clientY;
 
         const scale = sizes[currentSize].scale;
         const size = SPRITE_SIZE * scale;
         mascot.dragOffsetX = e.clientX - mascot.x;
         mascot.dragOffsetY = e.clientY - (mascot.y - size);
+    }
+
+    function promoteToDrag() {
+        mascot.dragPending = false;
+        mascot.isDragging = true;
+        mascot.state = State.DRAGGED;
+
+        // Close chat if open
+        if (isChatOpen) closeChatBubble();
 
         // Initialize drag animation state
         mascot.prevDragX = mascot.x;
@@ -256,53 +295,79 @@
         mascotElement.style.cursor = 'grabbing';
     }
 
-    function startDragTouch(e) {
+    function onMouseMove(e) {
+        if (mascot.dragPending) {
+            const dx = e.clientX - mascot.dragStartX;
+            const dy = e.clientY - mascot.dragStartY;
+            if (Math.sqrt(dx * dx + dy * dy) > DRAG_THRESHOLD) {
+                promoteToDrag();
+            }
+        }
+
+        if (!mascot.isDragging) return;
+
+        const scale = sizes[currentSize].scale;
+        const size = SPRITE_SIZE * scale;
+        mascot.x = e.clientX - mascot.dragOffsetX;
+        mascot.y = e.clientY - mascot.dragOffsetY + size;
+        updatePosition();
+    }
+
+    function onMouseUp(e) {
+        if (mascot.dragPending) {
+            // Never exceeded threshold → treat as click
+            mascot.dragPending = false;
+            handleMascotClick();
+            return;
+        }
+
+        if (!mascot.isDragging) return;
+        endDrag();
+    }
+
+    function onTouchStart(e) {
         e.preventDefault();
         const touch = e.touches[0];
-        mascot.isDragging = true;
-        mascot.state = State.DRAGGED;
+        mascot.dragPending = true;
+        mascot.dragStartX = touch.clientX;
+        mascot.dragStartY = touch.clientY;
 
         const scale = sizes[currentSize].scale;
         const size = SPRITE_SIZE * scale;
         mascot.dragOffsetX = touch.clientX - mascot.x;
         mascot.dragOffsetY = touch.clientY - (mascot.y - size);
-
-        // Initialize drag animation state
-        mascot.prevDragX = mascot.x;
-        mascot.smoothedVelocityX = 0;
-        mascot.dragTick = 0;
-        mascot.isResisting = false;
-        mascot.resistAnimTick = 0;
     }
 
-    function onDrag(e) {
-        if (!mascot.isDragging) return;
+    function onTouchMove(e) {
+        if (mascot.dragPending) {
+            const touch = e.touches[0];
+            const dx = touch.clientX - mascot.dragStartX;
+            const dy = touch.clientY - mascot.dragStartY;
+            if (Math.sqrt(dx * dx + dy * dy) > DRAG_THRESHOLD) {
+                promoteToDrag();
+            }
+        }
 
-        const scale = sizes[currentSize].scale;
-        const size = SPRITE_SIZE * scale;
-
-        // Update position
-        mascot.x = e.clientX - mascot.dragOffsetX;
-        mascot.y = e.clientY - mascot.dragOffsetY + size;
-
-        // Update position immediately for responsiveness
-        updatePosition();
-    }
-
-    function onDragTouch(e) {
         if (!mascot.isDragging) return;
         e.preventDefault();
         const touch = e.touches[0];
 
         const scale = sizes[currentSize].scale;
         const size = SPRITE_SIZE * scale;
-
-        // Update position
         mascot.x = touch.clientX - mascot.dragOffsetX;
         mascot.y = touch.clientY - mascot.dragOffsetY + size;
-
-        // Update position immediately for responsiveness
         updatePosition();
+    }
+
+    function onTouchEnd(e) {
+        if (mascot.dragPending) {
+            mascot.dragPending = false;
+            handleMascotClick();
+            return;
+        }
+
+        if (!mascot.isDragging) return;
+        endDrag();
     }
 
     function endDrag() {
@@ -385,6 +450,368 @@
         mascotElement.style.transform = 'scaleX(1)';
     }
 
+    // --- Chat Bubble UI ---
+    function createChatBubble() {
+        if (chatBubbleEl) return;
+        injectFontIfNeeded();
+
+        // Chat bubble container
+        chatBubbleEl = document.createElement('div');
+        chatBubbleEl.id = 'shimeji-chat-bubble';
+
+        // Header
+        const header = document.createElement('div');
+        header.className = 'shimeji-chat-header';
+        const title = document.createElement('span');
+        title.textContent = 'Chat';
+        const closeBtn = document.createElement('button');
+        closeBtn.className = 'shimeji-chat-close';
+        closeBtn.textContent = '\u00D7';
+        closeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            closeChatBubble();
+        });
+        header.appendChild(title);
+        header.appendChild(closeBtn);
+
+        // Messages area
+        chatMessagesEl = document.createElement('div');
+        chatMessagesEl.className = 'shimeji-chat-messages';
+
+        // Input area
+        const inputArea = document.createElement('div');
+        inputArea.className = 'shimeji-chat-input-area';
+        chatInputEl = document.createElement('input');
+        chatInputEl.className = 'shimeji-chat-input';
+        chatInputEl.type = 'text';
+        chatInputEl.placeholder = 'Say something...';
+        chatInputEl.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') sendChatMessage();
+        });
+        // Prevent mascot interaction when typing
+        chatInputEl.addEventListener('mousedown', (e) => e.stopPropagation());
+        chatInputEl.addEventListener('touchstart', (e) => e.stopPropagation());
+
+        const sendBtn = document.createElement('button');
+        sendBtn.className = 'shimeji-chat-send';
+        sendBtn.textContent = '\u25B6';
+        sendBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            sendChatMessage();
+        });
+
+        inputArea.appendChild(chatInputEl);
+        inputArea.appendChild(sendBtn);
+
+        chatBubbleEl.appendChild(header);
+        chatBubbleEl.appendChild(chatMessagesEl);
+        chatBubbleEl.appendChild(inputArea);
+
+        // Prevent clicks inside bubble from propagating
+        chatBubbleEl.addEventListener('mousedown', (e) => e.stopPropagation());
+        chatBubbleEl.addEventListener('touchstart', (e) => e.stopPropagation());
+
+        document.body.appendChild(chatBubbleEl);
+
+        // Close when clicking outside
+        document.addEventListener('mousedown', onClickOutsideChat);
+    }
+
+    function createThinkingBubble() {
+        if (thinkingBubbleEl) return;
+
+        thinkingBubbleEl = document.createElement('div');
+        thinkingBubbleEl.id = 'shimeji-thinking-bubble';
+        for (let i = 0; i < 3; i++) {
+            const dot = document.createElement('div');
+            dot.className = 'shimeji-thinking-dot';
+            thinkingBubbleEl.appendChild(dot);
+        }
+        document.body.appendChild(thinkingBubbleEl);
+    }
+
+    function createAlertBubble() {
+        if (alertBubbleEl) return;
+
+        alertBubbleEl = document.createElement('div');
+        alertBubbleEl.id = 'shimeji-alert-bubble';
+        alertBubbleEl.textContent = '!';
+        document.body.appendChild(alertBubbleEl);
+    }
+
+    function createInlineThinking() {
+        if (inlineThinkingEl) return;
+        inlineThinkingEl = document.createElement('div');
+        inlineThinkingEl.className = 'shimeji-inline-thinking';
+        for (let i = 0; i < 3; i++) {
+            const dot = document.createElement('div');
+            dot.className = 'shimeji-thinking-dot';
+            inlineThinkingEl.appendChild(dot);
+        }
+    }
+
+    function onClickOutsideChat(e) {
+        if (!isChatOpen) return;
+        if (chatBubbleEl && chatBubbleEl.contains(e.target)) return;
+        if (mascotElement && mascotElement.contains(e.target)) return;
+        closeChatBubble();
+    }
+
+    function openChatBubble() {
+        if (!chatBubbleEl) createChatBubble();
+        isChatOpen = true;
+        chatBubbleEl.classList.add('visible');
+        updateBubblePosition();
+
+        // Clear unread indicator
+        hasUnreadMessage = false;
+        hideAlert();
+
+        // Sit still while chatting
+        if (mascot.state !== State.FALLING && mascot.state !== State.DRAGGED) {
+            mascot.state = State.SITTING;
+            mascot.currentAnimation = 'sitting';
+            mascot.direction = 0;
+            mascot.animationFrame = 0;
+            mascot.animationTick = 0;
+            mascot.stateTimer = 0;
+        }
+
+        // Scroll to bottom and focus input
+        setTimeout(() => {
+            if (chatMessagesEl) chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+            if (chatInputEl) chatInputEl.focus();
+        }, 50);
+    }
+
+    function closeChatBubble() {
+        isChatOpen = false;
+        if (chatBubbleEl) chatBubbleEl.classList.remove('visible');
+        // Remove inline thinking if present
+        removeInlineThinking();
+
+        // Resume normal behavior
+        if (mascot.state === State.SITTING) {
+            mascot.state = State.IDLE;
+            mascot.currentAnimation = 'idle';
+            mascot.stateTimer = 0;
+            mascot.animationFrame = 0;
+        }
+    }
+
+    function showThinking() {
+        isThinking = true;
+        if (isChatOpen) {
+            // Show inline thinking dots inside chat
+            showInlineThinking();
+        } else {
+            // Show floating thinking bubble above mascot
+            if (!thinkingBubbleEl) createThinkingBubble();
+            thinkingBubbleEl.classList.add('visible');
+            updateBubblePosition();
+        }
+    }
+
+    function hideThinking() {
+        isThinking = false;
+        if (thinkingBubbleEl) thinkingBubbleEl.classList.remove('visible');
+        removeInlineThinking();
+    }
+
+    function showInlineThinking() {
+        if (!chatMessagesEl) return;
+        createInlineThinking();
+        if (!inlineThinkingEl.parentNode) {
+            chatMessagesEl.appendChild(inlineThinkingEl);
+        }
+        chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+    }
+
+    function removeInlineThinking() {
+        if (inlineThinkingEl && inlineThinkingEl.parentNode) {
+            inlineThinkingEl.parentNode.removeChild(inlineThinkingEl);
+        }
+    }
+
+    function showAlert() {
+        if (!alertBubbleEl) createAlertBubble();
+        hasUnreadMessage = true;
+        alertBubbleEl.classList.add('visible');
+        updateBubblePosition();
+    }
+
+    function hideAlert() {
+        hasUnreadMessage = false;
+        if (alertBubbleEl) alertBubbleEl.classList.remove('visible');
+    }
+
+    function updateBubblePosition() {
+        const scale = sizes[currentSize].scale;
+        const size = SPRITE_SIZE * scale;
+        const mascotTopY = mascot.y - size;
+        const mascotCenterX = mascot.x + size / 2;
+
+        if (chatBubbleEl && isChatOpen) {
+            const bubbleWidth = 280;
+            const bubbleHeight = chatBubbleEl.offsetHeight || 200;
+            let left = mascotCenterX - bubbleWidth / 2;
+            let top = mascotTopY - bubbleHeight - 12;
+
+            // Keep within viewport
+            left = Math.max(8, Math.min(left, window.innerWidth - bubbleWidth - 8));
+            if (top < 8) top = mascot.y + 12; // Below mascot if no room above
+
+            chatBubbleEl.style.left = `${left}px`;
+            chatBubbleEl.style.top = `${top}px`;
+        }
+
+        // Floating thinking bubble (only when chat is closed)
+        if (thinkingBubbleEl && isThinking && !isChatOpen) {
+            const thinkingWidth = thinkingBubbleEl.offsetWidth || 56;
+            let left = mascotCenterX - thinkingWidth / 2;
+            let top = mascotTopY - 36;
+
+            left = Math.max(8, Math.min(left, window.innerWidth - thinkingWidth - 8));
+            if (top < 8) top = 8;
+
+            thinkingBubbleEl.style.left = `${left}px`;
+            thinkingBubbleEl.style.top = `${top}px`;
+        }
+
+        // Alert bubble (unread message indicator)
+        if (alertBubbleEl && hasUnreadMessage && !isChatOpen) {
+            const alertWidth = alertBubbleEl.offsetWidth || 28;
+            let left = mascotCenterX - alertWidth / 2;
+            let top = mascotTopY - 36;
+
+            left = Math.max(8, Math.min(left, window.innerWidth - alertWidth - 8));
+            if (top < 8) top = 8;
+
+            alertBubbleEl.style.left = `${left}px`;
+            alertBubbleEl.style.top = `${top}px`;
+        }
+    }
+
+    function appendMessage(role, content) {
+        if (!chatMessagesEl) return;
+        const msgEl = document.createElement('div');
+        msgEl.className = `shimeji-chat-msg ${role}`;
+        msgEl.textContent = content;
+        chatMessagesEl.appendChild(msgEl);
+        chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+    }
+
+    function appendErrorMessage(text) {
+        if (!chatMessagesEl) return;
+        const msgEl = document.createElement('div');
+        msgEl.className = 'shimeji-chat-msg error';
+        msgEl.textContent = text;
+        chatMessagesEl.appendChild(msgEl);
+        chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+    }
+
+    function handleMascotClick() {
+        if (isChatOpen) {
+            closeChatBubble();
+        } else {
+            openChatBubble();
+        }
+    }
+
+    function sendChatMessage() {
+        if (!chatInputEl) return;
+        const text = chatInputEl.value.trim();
+        if (!text) return;
+
+        chatInputEl.value = '';
+        appendMessage('user', text);
+        conversationHistory.push({ role: 'user', content: text });
+
+        showThinking();
+
+        chrome.runtime.sendMessage(
+            { type: 'aiChat', messages: conversationHistory },
+            (response) => {
+                hideThinking();
+                if (chrome.runtime.lastError) {
+                    appendErrorMessage('Could not reach extension. Try reloading the page.');
+                    return;
+                }
+                if (response && response.error) {
+                    appendErrorMessage(response.error);
+                    return;
+                }
+                if (response && response.content) {
+                    conversationHistory.push({ role: 'assistant', content: response.content });
+                    appendMessage('ai', response.content);
+                    // Show alert if chat was closed while waiting
+                    if (!isChatOpen) {
+                        showAlert();
+                    }
+                }
+            }
+        );
+    }
+
+    // --- Proactive Messages ---
+    function scheduleProactiveMessage() {
+        clearProactiveTimer();
+        if (!proactiveEnabled) return;
+
+        // Random interval between 3-7 minutes (180000-420000ms)
+        const delay = 180000 + Math.random() * 240000;
+        proactiveTimer = setTimeout(triggerProactiveMessage, delay);
+    }
+
+    function clearProactiveTimer() {
+        if (proactiveTimer) {
+            clearTimeout(proactiveTimer);
+            proactiveTimer = null;
+        }
+    }
+
+    function triggerProactiveMessage() {
+        // Skip if chat is already open or mascot is disabled
+        if (isChatOpen || isDisabled) {
+            scheduleProactiveMessage();
+            return;
+        }
+
+        showThinking();
+
+        chrome.runtime.sendMessage(
+            {
+                type: 'aiProactiveMessage',
+                pageTitle: document.title,
+                pageUrl: window.location.href
+            },
+            (response) => {
+                hideThinking();
+                if (chrome.runtime.lastError || !response || response.error) {
+                    // Silently fail for proactive messages
+                    scheduleProactiveMessage();
+                    return;
+                }
+                if (response.content) {
+                    conversationHistory.push({ role: 'assistant', content: response.content });
+                    appendMessage('ai', response.content);
+                    // Don't force open chat — just show alert
+                    showAlert();
+                }
+                scheduleProactiveMessage();
+            }
+        );
+    }
+
+    function loadProactiveState() {
+        chrome.storage.local.get(['proactiveMessages'], (data) => {
+            proactiveEnabled = !!data.proactiveMessages;
+            if (proactiveEnabled) {
+                scheduleProactiveMessage();
+            }
+        });
+    }
+
     // --- State Machine ---
     function updateState() {
         const scale = sizes[currentSize].scale;
@@ -396,6 +823,11 @@
         // Handle drag state separately
         if (mascot.isDragging) {
             updateDragAnimation();
+            return;
+        }
+
+        // Stay sitting while chat is open
+        if (isChatOpen && mascot.state === State.SITTING) {
             return;
         }
 
@@ -541,6 +973,9 @@
 
         mascotElement.style.left = `${drawX}px`;
         mascotElement.style.top = `${drawY}px`;
+
+        // Update bubble positions to follow mascot
+        updateBubblePosition();
     }
 
     // --- Main Game Loop ---
@@ -564,6 +999,7 @@
         mascot.animationTick = 0;
         mascot.stateTimer = 0;
         mascot.isDragging = false;
+        mascot.dragPending = false;
         mascot.isResisting = false;
     }
 
@@ -575,6 +1011,9 @@
 
             resetMascotState();
             createMascot();
+            createChatBubble();
+            createThinkingBubble();
+            createAlertBubble();
 
             gameLoopTimer = setInterval(gameLoop, TICK_MS);
 
@@ -582,6 +1021,9 @@
                 updateSpriteDisplay();
                 updatePosition();
             }, 100);
+
+            // Start proactive messages if enabled
+            loadProactiveState();
         });
     }
 
@@ -592,7 +1034,31 @@
         }
 
         mascot.isDragging = false;
+        mascot.dragPending = false;
         mascot.isResisting = false;
+
+        // Clean up chat elements
+        closeChatBubble();
+        hideThinking();
+        hideAlert();
+        clearProactiveTimer();
+
+        if (chatBubbleEl) {
+            chatBubbleEl.remove();
+            chatBubbleEl = null;
+            chatMessagesEl = null;
+            chatInputEl = null;
+        }
+        if (thinkingBubbleEl) {
+            thinkingBubbleEl.remove();
+            thinkingBubbleEl = null;
+        }
+        if (alertBubbleEl) {
+            alertBubbleEl.remove();
+            alertBubbleEl = null;
+        }
+        inlineThinkingEl = null;
+        document.removeEventListener('mousedown', onClickOutsideChat);
 
         if (mascotElement) {
             mascotElement.remove();
@@ -637,38 +1103,56 @@
             if (mascot.state !== State.FALLING && mascot.state !== State.DRAGGED) {
                 mascot.y = window.innerHeight;
             }
+        } else if (message.action === 'updateProactiveMessages') {
+            proactiveEnabled = !!message.enabled;
+            if (proactiveEnabled) {
+                scheduleProactiveMessage();
+            } else {
+                clearProactiveTimer();
+            }
         }
     });
 
     chrome.storage.onChanged.addListener((changes, areaName) => {
-        if (areaName !== 'sync') return;
+        if (areaName === 'sync') {
+            if (changes.character) {
+                const newChar = changes.character.newValue;
+                if (newChar && newChar !== currentCharacter) {
+                    currentCharacter = newChar;
+                    CHARACTER_BASE = chrome.runtime.getURL('characters/' + currentCharacter + '/');
+                    spritesLoaded = false;
+                    spritesLoadedPromise = null;
+                    preloadSprites().then(() => {
+                        updateSpriteDisplay();
+                    });
+                }
+            }
 
-        if (changes.character) {
-            const newChar = changes.character.newValue;
-            if (newChar && newChar !== currentCharacter) {
-                currentCharacter = newChar;
-                CHARACTER_BASE = chrome.runtime.getURL('characters/' + currentCharacter + '/');
-                spritesLoaded = false;
-                spritesLoadedPromise = null;
-                preloadSprites().then(() => {
-                    updateSpriteDisplay();
+            if (changes.size) {
+                currentSize = changes.size.newValue;
+                updateMascotStyle();
+
+                if (mascot.state !== State.FALLING && mascot.state !== State.DRAGGED) {
+                    mascot.y = window.innerHeight;
+                }
+            }
+
+            if (changes.disabledAll || changes.disabledPages) {
+                chrome.storage.sync.get([STORAGE_KEYS.disabledAll, STORAGE_KEYS.disabledPages], (data) => {
+                    applyVisibilityState(data.disabledAll, data.disabledPages);
                 });
             }
         }
 
-        if (changes.size) {
-            currentSize = changes.size.newValue;
-            updateMascotStyle();
-
-            if (mascot.state !== State.FALLING && mascot.state !== State.DRAGGED) {
-                mascot.y = window.innerHeight;
+        if (areaName === 'local') {
+            if (changes.proactiveMessages) {
+                proactiveEnabled = !!changes.proactiveMessages.newValue;
+                if (proactiveEnabled) {
+                    scheduleProactiveMessage();
+                } else {
+                    clearProactiveTimer();
+                }
             }
-        }
-
-        if (changes.disabledAll || changes.disabledPages) {
-            chrome.storage.sync.get([STORAGE_KEYS.disabledAll, STORAGE_KEYS.disabledPages], (data) => {
-                applyVisibilityState(data.disabledAll, data.disabledPages);
-            });
         }
     });
 
@@ -711,6 +1195,12 @@
             clearInterval(gameLoopTimer);
             gameLoopTimer = null;
         }
+        clearProactiveTimer();
+        if (chatBubbleEl) { chatBubbleEl.remove(); chatBubbleEl = null; }
+        if (thinkingBubbleEl) { thinkingBubbleEl.remove(); thinkingBubbleEl = null; }
+        if (alertBubbleEl) { alertBubbleEl.remove(); alertBubbleEl = null; }
+        inlineThinkingEl = null;
+        document.removeEventListener('mousedown', onClickOutsideChat);
         if (mascotElement) {
             mascotElement.remove();
             mascotElement = null;
